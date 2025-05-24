@@ -104,25 +104,24 @@ async def fetch_and_update_metals_data():
         traceback.print_exc() # Для более детальной отладки в консоли браузера
 
 async def main_loop():
-    print(f"ФРОНТЕНД (main.py): Запуск основного цикла обновления каждые {UPDATE_INTERVAL_SECONDS} секунд.")
-    # Однократная загрузка исторических данных при старте - теперь вызывается из модуля tabl2
-    await tabl2.fetch_historical_data_once()
-    await asyncio.sleep(0.1) # Небольшая пауза на всякий случай
+    print(f"ФРОНТЕНД (main.py): Запуск основного цикла.")
     
-    # Передаем загруженные данные в модуль grafik
-    if tabl2.all_historical_data_cache: # Убедимся, что кэш не пустой
+    # Однократная загрузка исторических данных при старте из tabl2.py
+    historical_data_loaded_successfully = await tabl2.fetch_historical_data_once()
+    await asyncio.sleep(0.1) 
+    
+    # Передаем загруженные исторические данные в модуль grafik
+    if historical_data_loaded_successfully and tabl2.all_historical_data_cache:
         set_external_historical_data(tabl2.all_historical_data_cache)
+        print("ФРОНТЕНД (main.py): Исторические данные переданы в grafik.py.")
     else:
-        print("ФРОНТЕНД (main.py): Исторический кэш в tabl2 пуст, не передаем в grafik.")
+        print("ФРОНТЕНД (main.py): Исторический кэш в tabl2 пуст или не был загружен, не передаем в grafik.")
 
+    # Основной цикл для обновления актуальных цен из tabl1.py
     while True:
-        await fetch_and_update_metals_data() # Это для актуальных цен
-        # Исторические данные уже загружены через tabl2.py, обновлять их в цикле не будем (пока)
-        print(f"ФРОНТЕНД (main.py): Ожидание {UPDATE_INTERVAL_SECONDS} секунд до следующего обновления актуальных цен... ({time.strftime('%H:%M:%S')})")
-        await asyncio.sleep(UPDATE_INTERVAL_SECONDS) 
+        await tabl1.fetch_and_update_actual_metals_data() 
+        print(f"ФРОНТЕНД (main.py): Ожидание {tabl1.UPDATE_INTERVAL_SECONDS} секунд до следующего обновления актуальных цен... ({time.strftime('%H:%M:%S')})")
+        await asyncio.sleep(tabl1.UPDATE_INTERVAL_SECONDS)
 
-print("ФРОНТЕНД (main.py): PyScript (main.py) загружен. Запуск цикла обновления данных...")
-# Немедленный первый вызов, чтобы заполнить таблицу как можно скорее
-# asyncio.ensure_future(fetch_and_update_metals_data()) 
-# Затем запускаем основной цикл
+print("ФРОНТЕНД (main.py): PyScript (main.py) загружен. Запуск основного цикла...")
 asyncio.ensure_future(main_loop()) 

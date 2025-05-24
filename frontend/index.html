@@ -84,12 +84,13 @@
     <div class="chart-container" style="width: 80%; margin: 30px auto; background-color: #fff; padding:20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
         <canvas id="metalsPriceChart"></canvas>
     </div>
+    <div id="chart-error-container" style="text-align: center; margin-top: 10px;"></div>
 
     <!-- Подключаем наши Python скрипты -->
     <!-- PyScript автоматически обрабатывает импорты между этими файлами -->
     <py-config>
         [[fetch]]
-        files = ["./tabl2.py", "./grafik.py"]
+        files = ["./tabl1.py", "./tabl2.py", "./grafik.py"]
     </py-config>
     <py-script src="main.py"></py-script>
 </body>

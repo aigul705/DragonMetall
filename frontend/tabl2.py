@@ -63,11 +63,15 @@ async def fetch_historical_data_once():
         if all_historical_data_cache:
             print(f"ФРОНТЕНД (tabl2.py): Исторические данные успешно загружены и закэшированы.")
             # По умолчанию отобразим данные для первого металла в списке (если он есть)
+            # Это делается для того, чтобы при первой загрузке страницы таблица не была пустой, если данные пришли
             metal_select_element = document.querySelector("#metal-select")
-            if metal_select_element and metal_select_element.value:
-                # Вызываем обновление с текущим значением селекта, если элемент найден
-                # Это гарантирует, что таблица заполнится при первой загрузке, если данные пришли успешно
-                update_historical_table_on_select(None) 
+            date_select_element = document.querySelector("#date-select") # Нужен для передачи в update_historical_table_on_select
+            
+            if metal_select_element and date_select_element: 
+                # Вызываем обновление с текущим значением селекта металла и даты
+                # чтобы таблица заполнилась при первой загрузке, если данные пришли успешно
+                # Передаем None как event, так как это не прямой вызов из события
+                update_historical_table_on_select(event=None) 
             return True
         else:
             display_error_in_historical_table("API исторических данных вернуло ответ без данных.")
@@ -91,9 +95,11 @@ def update_historical_table_on_select(event):
     selected_date_raw = date_select_element.value
 
     selected_date_formatted = ""
+    # Если дата не выбрана (пустая строка), то selected_date_formatted останется пустой,
+    # и это будет означать, что фильтр по дате не применяется (показывать все даты для металла).
     if selected_date_raw:
         try:
-            parts = selected_date_raw.split('-')
+            parts = selected_date_raw.split('-') # YYYY-MM-DD
             if len(parts) == 3:
                 selected_date_formatted = f"{parts[2]}.{parts[1]}.{parts[0]}"
             else:
@@ -109,7 +115,8 @@ def update_historical_table_on_select(event):
 
     if not all_historical_data_cache:
         print("ФРОНТЕНД (tabl2.py): Исторические данные еще не загружены. Таблица не будет обновлена.")
-        display_error_in_historical_table("Исторические данные не загружены. Попробуйте обновить страницу.")
+        # Можно не выводить ошибку в таблицу, если это первоначальная загрузка и данные еще в пути
+        # display_error_in_historical_table("Исторические данные не загружены. Попробуйте обновить страницу.")
         return
 
     metal_data = all_historical_data_cache.get(selected_metal)
