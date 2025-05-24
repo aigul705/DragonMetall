@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Сайт</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- PyScript CSS -->
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PyScript JS -->
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+</head>
+<body>
+    <h1>Актуальные цены на драгоценные металлы</h1>
+
+    <table id="metals-table">
+        <thead>
+            <tr>
+                <th>Название металла</th>
+                <th>Цена</th>
+                <th>Единица</th>
+                <th>Дата</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Сюда PyScript будет добавлять строки с данными -->
+        </tbody>
+    </table>
+
+    <p class="data-source-disclaimer">Данные взяты из Центробанка*</p>
+
+    <hr class="separator">
+
+    <h2>Исторические данные по ценам на металлы</h2>
+
+    <div class="filter-container">
+        <label for="metal-select">Выберите металл:</label>
+        <select id="metal-select">
+            <option value="Золото">Золото</option>
+            <option value="Серебро">Серебро</option>
+            <option value="Платина">Платина</option>
+            <option value="Палладий">Палладий</option>
+        </select>
+        <label for="date-select" style="margin-left: 20px;">Выберите дату:</label>
+        <input type="date" id="date-select" value="2025-05-23">
+    </div>
+
+    <table id="historical-metals-table">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Цена (руб./грамм)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Сюда PyScript будет добавлять строки с историческими данными -->
+        </tbody>
+    </table>
+
+    <hr class="separator">
+
+    <h2>График изменения цен на металлы</h2>
+
+    <div class="filter-container" id="chart-filter-container">
+        <label for="chart-metal-select">Металл:</label>
+        <select id="chart-metal-select">
+            <option value="Золото">Золото</option>
+            <option value="Серебро">Серебро</option>
+            <option value="Платина">Платина</option>
+            <option value="Палладий">Палладий</option>
+        </select>
+
+        <label for="chart-date-start" style="margin-left: 15px;">С даты:</label>
+        <input type="date" id="chart-date-start" value="2024-12-12">
+
+        <label for="chart-date-end" style="margin-left: 15px;">По дату:</label>
+        <input type="date" id="chart-date-end" value="2025-01-01">
+
+        <button id="update-chart-button" style="margin-left: 20px;">Показать график</button>
+    </div>
+
+    <div class="chart-container" style="width: 80%; margin: 30px auto; background-color: #fff; padding:20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <canvas id="metalsPriceChart"></canvas>
+    </div>
+
+    <!-- Подключаем наши Python скрипты -->
+    <!-- PyScript автоматически обрабатывает импорты между этими файлами -->
+    <py-config>
+        [[fetch]]
+        files = ["./tabl2.py", "./grafik.py"]
+    </py-config>
+    <py-script src="main.py"></py-script>
+</body>
+</html> 
