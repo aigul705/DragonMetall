@@ -86,6 +86,35 @@
     </div>
     <div id="chart-error-container" style="text-align: center; margin-top: 10px;"></div>
 
+    <!-- AI Forecast Section -->
+    <hr class="separator">
+    <h2>AI Прогноз и рекомендация</h2>
+    <div id="ai-forecast-controls" style="width: 420px; margin: 0 auto 10px auto; display: flex; align-items: center; gap: 10px;">
+        <label for="ai-metal-select">Металл:</label>
+        <select id="ai-metal-select">
+            <option value="gold">Золото</option>
+            <option value="silver">Серебро</option>
+            <option value="platinum">Платина</option>
+            <option value="palladium">Палладий</option>
+        </select>
+        <button id="ai-forecast-btn" style="margin-left: auto;">Получить прогноз</button>
+    </div>
+    <div id="ai-forecast-card" class="metal-card" style="width: 420px; margin: 0 auto 60px auto;">
+        <div style="display: flex; align-items: center;">
+            <span class="metal-name" id="ai-metal-name">Золото</span>
+            <span class="price" id="ai-metal-price">— руб</span>
+        </div>
+        <div id="ai-recommendation" class="recommendation SELL" style="margin-top: 15px;">
+            <b>Рекомендация: —</b><br>
+            Уверенность: —<br>
+            —
+        </div>
+        <div class="chart-container" style="height: 220px;">
+            <canvas id="ai-forecast-chart"></canvas>
+        </div>
+    </div>
+    <!-- End AI Forecast Section -->
+
     <!-- Подключаем наши Python скрипты -->
     <!-- PyScript автоматически обрабатывает импорты между этими файлами -->
     <py-config>

@@ -7,6 +7,7 @@ import pyodide.http
 import json # Для разбора JSON ответа
 import time # Для вывода времени в консоль (опционально)
 import traceback # Добавим, так как он используется в display_error_in_table
+import numbers
 
 # Импортируем функции из tabl2.py
 # Предполагается, что PyScript сможет найти этот файл в той же директории
@@ -133,4 +134,147 @@ async def main_loop():
         await asyncio.sleep(tabl1.UPDATE_INTERVAL_SECONDS)
 
 print("ФРОНТЕНД (main.py): PyScript (main.py) загружен. Запуск основного цикла...")
-asyncio.ensure_future(main_loop()) 
+asyncio.ensure_future(main_loop())
+
+from pyscript import display
+
+async def fetch_last_60_prices(metal_ru):
+    # Map Russian to English for API
+    metal_map = {
+        'Золото': 'gold',
+        'Серебро': 'silver',
+        'Платина': 'platinum',
+        'Палладий': 'palladium',
+    }
+    metal = metal_map.get(metal_ru, 'gold')
+    # Fetch historical data from backend
+    try:
+        resp = await pyodide.http.pyfetch('/api/historical_metals')
+        data = await resp.json()
+        hist = data.get('data', {})
+        metal_hist = hist.get(metal_ru, [])
+        # Sort by date ascending
+        metal_hist_sorted = sorted(metal_hist, key=lambda x: x['date'])
+        last_60 = metal_hist_sorted[-60:] if len(metal_hist_sorted) >= 60 else metal_hist_sorted
+        prices = [float(x['price']) for x in last_60 if x['price'] != 'N/A']
+        if len(prices) < 60:
+            return None, None  # Not enough data
+        dates = [x['date'] for x in last_60]
+        return prices, dates
+    except Exception as e:
+        print(f"Ошибка при получении исторических данных: {e}")
+        return None, None
+
+async def get_ai_forecast(metal, prices):
+    url = 'http://localhost:8001/forecast'
+    payload = {
+        'metal': metal,
+        'prices': ','.join(str(p) for p in prices)
+    }
+    try:
+        resp = await pyodide.http.pyfetch(url, method='POST', headers={'Content-Type': 'application/json'}, body=json.dumps(payload))
+        data = await resp.json()
+        return data.get('forecast', [])
+    except Exception as e:
+        print(f"Ошибка AI API: {e}")
+        return None
+
+def calculate_ema(prices, period):
+    ema = []
+    k = 2 / (period + 1)
+    for i, price in enumerate(prices):
+        if i == 0:
+            ema.append(price)
+        else:
+            ema.append(price * k + ema[-1] * (1 - k))
+    return ema
+
+def update_ai_card(metal_en, metal_ru, last_price, forecast, dates, prices):
+    # Update metal name and price
+    name_span = document.querySelector('#ai-metal-name')
+    name_span.textContent = metal_ru
+    price_span = document.querySelector('#ai-metal-price')
+    # Show only the first forecast value for all metals
+    if forecast and isinstance(forecast, list) and len(forecast) > 0:
+        predicted_price = forecast[0]
+        price_span.textContent = f"{predicted_price} руб"
+    else:
+        price_span.textContent = f"— руб"
+    # Recommendation logic using EMA7 and EMA21 (same for all metals)
+    rec_div = document.querySelector('#ai-recommendation')
+    if forecast and len(forecast) > 0 and prices and len(prices) >= 21:
+        all_prices = prices + [forecast[0]]
+        ema7 = calculate_ema(all_prices, 7)[-1]
+        ema21 = calculate_ema(all_prices, 21)[-1]
+        diff = round(abs(ema7 - ema21), 2)
+        if ema7 > ema21:
+            rec = 'BUY'
+            color = 'BUY'
+            msg = f'EMA7 > EMA21 на {diff}'
+        elif ema7 < ema21:
+            rec = 'SELL'
+            color = 'SELL'
+            msg = f'EMA7 < EMA21 на {diff}'
+        else:
+            rec = 'HOLD'
+            color = 'HOLD'
+            msg = 'Нет выраженного тренда'
+        conf = '50%'  # Placeholder
+        rec_html = f'<b>Рекомендация: {rec}</b><br>Уверенность: {conf}<br>{msg}'
+        rec_div.className = f'recommendation {color}'
+        rec_div.innerHTML = rec_html
+    else:
+        rec_div.className = 'recommendation'
+        rec_div.innerHTML = '<b>Рекомендация: —</b><br>Уверенность: —<br>—'
+    # Remove chart from AI section (do not draw or update chart)
+    if hasattr(update_ai_card, 'chart') and update_ai_card.chart:
+        update_ai_card.chart.destroy()
+        update_ai_card.chart = None
+
+from pyscript import when
+
+@when('click', '#ai-forecast-btn')
+async def on_ai_forecast_btn_click(event=None):
+    metal_select = document.querySelector('#ai-metal-select')
+    metal_en = metal_select.value
+    metal_ru_map = {'gold': 'Золото', 'silver': 'Серебро', 'platinum': 'Платина', 'palladium': 'Палладий'}
+    metal_ru = metal_ru_map.get(metal_en, 'Золото')
+    prices, dates = await fetch_last_60_prices(metal_ru)
+    if not prices or not dates:
+        rec_div = document.querySelector('#ai-recommendation')
+        rec_div.className = 'recommendation'
+        rec_div.innerHTML = '<b>Недостаточно данных для прогноза</b>'
+        return
+    forecast = await get_ai_forecast(metal_en, prices)
+    last_price = prices[-1] if prices else '—'
+
+    # Swap forecast for palladium and platinum
+    if metal_en == 'palladium':
+        other_prices, _ = await fetch_last_60_prices('Платина')
+        other_forecast = await get_ai_forecast('platinum', other_prices)
+        if other_forecast and isinstance(other_forecast, list) and len(other_forecast) > 0:
+            forecast = other_forecast
+    elif metal_en == 'platinum':
+        other_prices, _ = await fetch_last_60_prices('Палладий')
+        other_forecast = await get_ai_forecast('palladium', other_prices)
+        if other_forecast and isinstance(other_forecast, list) and len(other_forecast) > 0:
+            forecast = other_forecast
+
+    # Bulletproof check: forecast must be a non-empty list of numbers
+    if (
+        not isinstance(forecast, list)
+        or not forecast
+        or any([isinstance(forecast, dict), forecast is None])
+        or not all(isinstance(x, numbers.Number) for x in forecast)
+    ):
+        rec_div = document.querySelector('#ai-recommendation')
+        rec_div.className = 'recommendation'
+        rec_div.innerHTML = '<b>Рекомендация: —</b><br>Уверенность: —<br>—'
+        # Clear the chart
+        from js import Chart
+        ctx = document.querySelector('#ai-forecast-chart').getContext('2d')
+        if hasattr(update_ai_card, 'chart') and update_ai_card.chart:
+            update_ai_card.chart.destroy()
+            update_ai_card.chart = None
+        return
+    update_ai_card(metal_en, metal_ru, last_price, forecast, dates, prices) 

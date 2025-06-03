@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Documentation</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+        strong { color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>API Documentation</h1>
+    <ul>
+        <li><strong>GET /api/recommendations</strong> - возвращает торговые рекомендации в JSON формате</li>
+        <li><strong>GET /</strong> - основной веб-интерфейс</li>
+        <li><strong>GET /test</strong> - тестовая страница</li>
+    </ul>
+    
+    <h2>Пример ответа /api/recommendations</h2>
+    <pre>{
+  "Au": {
+    "current_price": 8372.41,
+    "indicators": {
+      "ema_21": 8491.89,
+      "ema_7": 8458.26,
+      "macd": -201.76,
+      "rsi": 46.84,
+      "signal_line": -138.09
+    },
+    "signals": [
+      ["EMA", "SELL", "Медвежий тренд"],
+      ["MACD", "SELL", "Медвежье расхождение"]
+    ]
+  }
+}</pre>
+</body>
+</html>
