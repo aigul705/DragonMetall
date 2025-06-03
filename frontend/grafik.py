@@ -1,13 +1,12 @@
 print("ФРОНТЕНД (grafik.py): Файл grafik.py НАЧАЛ ВЫПОЛНЯТЬСЯ.")
 import asyncio
-from pyscript import document, when, window, Element
-# from pyscript.ffi import to_js # Комментируем или удаляем этот импорт
-from pyodide.ffi import to_js # Добавляем импорт из pyodide.ffi
+from pyscript import document
+from pyodide.ffi import to_js, create_proxy
 import json
 import time
 import traceback
-from datetime import datetime # Для работы с датами
-import js # Явный импорт для работы с JavaScript объектами
+from datetime import datetime
+import js
 
 # Локальный кэш для данных, полученных из main.py
 grafik_local_cache = {}
@@ -73,8 +72,7 @@ def parse_input_date(date_str):
 
 # Удаляем create_test_chart и handle_update_chart_button_click_TEST
 
-@when("click", "#update-chart-button")
-async def handle_update_chart_button_click(event=None): # Переименовываем и делаем основной
+async def handle_update_chart_button_click(event=None):
     print("ФРОНТЕНД (grafik.py): Нажата кнопка 'Показать график' (ID: #update-chart-button)")
     global current_chart, grafik_local_cache
 
@@ -229,6 +227,17 @@ async def handle_update_chart_button_click(event=None): # Переименовы
         traceback.print_exc()
         display_chart_error(f"Критическая ошибка Python при построении графика: {e}")
 
+def bind_chart_event_handlers():
+    try:
+        button = document.querySelector("#update-chart-button")
+        if button:
+            def proxy_handler(_):
+                asyncio.ensure_future(handle_update_chart_button_click())
+            
+            handler = create_proxy(proxy_handler)
+            button.addEventListener("click", handler)
+    except Exception as e:
+        print(f"Ошибка при привязке обработчика для графика: {e}")
 
 # Удаляем ненужные закомментированные импорты и функции, если они остались
 # Убедимся, что tabl2_cache_ref больше не используется, так как мы используем grafik_local_cache

@@ -8,6 +8,7 @@ import json # Для разбора JSON ответа
 import time # Для вывода времени в консоль (опционально)
 import traceback # Добавим, так как он используется в display_error_in_table
 import numbers
+from datetime import datetime, timedelta
 
 # Импортируем функции из tabl2.py
 # Предполагается, что PyScript сможет найти этот файл в той же директории
@@ -118,11 +119,10 @@ async def main_loop():
     
     # Передаем загруженные исторические данные в модуль grafik
     if historical_data_loaded_successfully and tabl2.all_historical_data_cache:
-        set_external_historical_data(tabl2.all_historical_data_cache)
-        print("ФРОНТЕНД (main.py): Исторические данные переданы в grafik.py.")
-    else:
-        print("ФРОНТЕНД (main.py): Исторический кэш в tabl2 пуст или не был загружен, не передаем в grafik.")
-
+        import grafik
+        grafik.set_external_historical_data(tabl2.all_historical_data_cache)
+        grafik.bind_chart_event_handlers()
+    
     # Первоначальная загрузка актуальных цен
     print("ФРОНТЕНД (main.py): Первоначальная загрузка актуальных цен из tabl1...")
     await tabl1.fetch_and_update_actual_metals_data()
@@ -226,10 +226,96 @@ def update_ai_card(metal_en, metal_ru, last_price, forecast, dates, prices):
     else:
         rec_div.className = 'recommendation'
         rec_div.innerHTML = '<b>Рекомендация: —</b><br>Уверенность: —<br>—'
-    # Remove chart from AI section (do not draw or update chart)
+
+    # Update chart
+    from js import Chart
+    ctx = document.querySelector('#ai-forecast-chart').getContext('2d')
     if hasattr(update_ai_card, 'chart') and update_ai_card.chart:
         update_ai_card.chart.destroy()
         update_ai_card.chart = None
+
+    # Создаем массивы для исторических данных и прогноза
+    historical_dates = dates[-30:] if dates else []  # Берем последний месяц
+    historical_prices = prices[-30:] if prices else []  # Берем последний месяц
+    
+    # Создаем даты для прогноза (7 дней вперед)
+    if historical_dates:
+        last_date = datetime.strptime(historical_dates[-1], '%d.%m.%Y')
+        forecast_dates = [(last_date + timedelta(days=i+1)).strftime('%d.%m.%Y') for i in range(len(forecast))]
+    else:
+        forecast_dates = []
+
+    # Создаем данные для соединительной линии
+    connection_dates = [historical_dates[-1], forecast_dates[0]] if historical_dates and forecast_dates else []
+    connection_prices = [historical_prices[-1], forecast[0]] if historical_prices and forecast else []
+
+    chart_data = {
+        'type': 'line',
+        'data': {
+            'labels': to_js(historical_dates + forecast_dates),
+            'datasets': [
+                {
+                    'label': 'Исторические данные',
+                    'data': to_js(historical_prices + [None] * len(forecast)),
+                    'borderColor': 'rgb(75, 192, 192)',
+                    'tension': 0.1,
+                    'fill': False
+                },
+                {
+                    'label': 'Прогноз',
+                    'data': to_js([None] * len(historical_prices) + forecast),
+                    'borderColor': 'rgb(255, 99, 132)',
+                    'tension': 0.1,
+                    'fill': False,
+                    'borderDash': [5, 5]
+                },
+                {
+                    'label': '',  # Пустой label, чтобы не отображалось в легенде
+                    'data': to_js([None] * (len(historical_dates) - 1) + connection_prices + [None] * (len(forecast) - 1)),
+                    'borderColor': 'rgb(255, 165, 0)',  # Оранжевый цвет
+                    'tension': 0,
+                    'fill': False,
+                    'borderWidth': 2,
+                    'pointRadius': 0,  # Убираем точки
+                    'showLine': True  # Показываем только линию
+                }
+            ]
+        },
+        'options': {
+            'responsive': True,
+            'maintainAspectRatio': False,
+            'plugins': {
+                'legend': {
+                    'display': True,
+                    'labels': {
+                        'filter': lambda item, chart: item['text'] != ''  # Скрываем пустые метки
+                    }
+                },
+                'title': {
+                    'display': True,
+                    'text': 'Исторические данные и прогноз'
+                }
+            },
+            'scales': {
+                'y': {
+                    'beginAtZero': False,
+                    'title': {
+                        'display': True,
+                        'text': 'Цена (руб./грамм)'
+                    }
+                },
+                'x': {
+                    'title': {
+                        'display': True,
+                        'text': 'Дата'
+                    }
+                }
+            }
+        }
+    }
+
+    js_chart_data = to_js(chart_data, dict_converter=js.Object.fromEntries)
+    update_ai_card.chart = Chart.new(ctx, js_chart_data)
 
 from pyscript import when
 

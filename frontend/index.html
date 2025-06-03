@@ -89,38 +89,58 @@
     <!-- AI Forecast Section -->
     <hr class="separator">
     <h2>AI Прогноз и рекомендация</h2>
-    <div id="ai-forecast-controls" style="width: 420px; margin: 0 auto 10px auto; display: flex; align-items: center; gap: 10px;">
-        <label for="ai-metal-select">Металл:</label>
-        <select id="ai-metal-select">
-            <option value="gold">Золото</option>
-            <option value="silver">Серебро</option>
-            <option value="platinum">Платина</option>
-            <option value="palladium">Палладий</option>
-        </select>
-        <button id="ai-forecast-btn" style="margin-left: auto;">Получить прогноз</button>
-    </div>
-    <div id="ai-forecast-card" class="metal-card" style="width: 420px; margin: 0 auto 60px auto;">
-        <div style="display: flex; align-items: center;">
-            <span class="metal-name" id="ai-metal-name">Золото</span>
-            <span class="price" id="ai-metal-price">— руб</span>
+    <div class="metal-card forecast-card">
+        <div class="metal-header">
+            <h3>Золото <span id="current-price">8338.21 руб</span></h3>
         </div>
-        <div id="ai-recommendation" class="recommendation SELL" style="margin-top: 15px;">
-            <b>Рекомендация: —</b><br>
-            Уверенность: —<br>
-            —
+        <div class="recommendation-box">
+            <div class="recommendation-header">
+                <span>Рекомендация: <strong id="recommendation-action">SELL</strong></span>
+                <span>Уверенность: <strong id="recommendation-confidence">50%</strong></span>
+            </div>
+            <div class="indicator-info" id="ema-info">
+                EMA7 < EMA21 на 40.85
+            </div>
         </div>
-        <div class="chart-container" style="height: 220px;">
+        <div class="chart-container forecast-chart">
             <canvas id="ai-forecast-chart"></canvas>
+        </div>
+        <div class="controls">
+            <select id="forecast-metal-select">
+                <option value="Au">Золото</option>
+                <option value="Ag">Серебро</option>
+                <option value="Pt">Платина</option>
+                <option value="Pd">Палладий</option>
+            </select>
+            <button id="get-forecast-btn">Показать прогноз</button>
         </div>
     </div>
     <!-- End AI Forecast Section -->
 
     <!-- Подключаем наши Python скрипты -->
-    <!-- PyScript автоматически обрабатывает импорты между этими файлами -->
     <py-config>
+        packages = ["numpy"]
         [[fetch]]
-        files = ["./main.py", "./tabl1.py", "./tabl2.py", "./grafik.py"]
+        files = ["./main.py", "./tabl1.py", "./tabl2.py", "./grafik.py", "./ai_forecast.py"]
     </py-config>
-    <py-script src="./main.py"></py-script>
+
+    <py-script>
+        from pyscript import document
+        import asyncio
+        
+        async def init():
+            # Импортируем модули
+            import ai_forecast
+            import main
+            
+            # Ждем небольшую паузу, чтобы DOM полностью загрузился
+            await asyncio.sleep(0.5)
+            
+            # Инициализируем обработчики событий
+            ai_forecast.bind_event_handlers()
+        
+        # Запускаем инициализацию
+        asyncio.ensure_future(init())
+    </py-script>
 </body>
 </html> 
