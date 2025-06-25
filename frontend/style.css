@@ -76,15 +76,15 @@ th {
     border: 1px solid #ccc;
 }
 
-/* Стили для второй (исторической) таблицы, если нужны специфичные */
+/* Стили для второй (исторической) таблицы */
 #historical-metals-table {
-    width: 60%; /* Например, сделаем ее немного уже */
-    /* Можно добавить другие специфичные стили или наследовать общие */
+    width: 60%; 
+    
 }
 
 /* Стили для контейнера фильтров графика */
 #chart-filter-container label {
-    margin-right: 5px; /* Уменьшим отступ для более компактного вида */
+    margin-right: 5px; 
 }
 
 #chart-filter-container select,
@@ -99,11 +99,11 @@ th {
     padding: 8px 15px;
 }
 
-/* Контейнер для самого графика (уже частично задан inline) */
+/* Контейнер для самого графика */
 .chart-container {
-    /* Можно добавить высоту, если maintainAspectRatio: false у графика */
-    height: 400px; /* Задаем явную высоту */
-    width: 80%; /* Убедимся, что ширина тоже есть в CSS */
+    
+    height: 400px;
+    width: 80%; 
     margin: 30px auto;
     background-color: #fff;
     padding: 20px;
@@ -112,7 +112,7 @@ th {
 }
 
 #metalsPriceChart {
-    width: 100% !important; /* !important чтобы переопределить возможные inline стили от Chart.js */
+    width: 100% !important; 
     height: 100% !important;
 }
 

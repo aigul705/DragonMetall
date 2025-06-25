@@ -1,4 +1,4 @@
-print("ФРОНТЕНД (ai_forecast.py): Файл ai_forecast.py НАЧАЛ ВЫПОЛНЯТЬСЯ.")
+print("Файл ai_forecast.py НАЧАЛ ВЫПОЛНЯТЬСЯ.")
 
 import asyncio
 from pyscript import document, when
@@ -14,34 +14,32 @@ current_forecast_chart = None
 
 def update_recommendation_box(action, confidence, ema_diff):
     """Обновляет блок рекомендации на основе полученных данных"""
-    try:
-        recommendation_action = document.querySelector("#recommendation-action")
-        recommendation_confidence = document.querySelector("#recommendation-confidence")
-        ema_info = document.querySelector("#ema-info")
-        recommendation_box = document.querySelector(".recommendation-box")
+    
+    recommendation_action = document.querySelector("#recommendation-action")
+    recommendation_confidence = document.querySelector("#recommendation-confidence")
+    ema_info = document.querySelector("#ema-info")
+    recommendation_box = document.querySelector(".recommendation-box")
         
-        if recommendation_action:
-            recommendation_action.textContent = action
-        if recommendation_confidence:
-            recommendation_confidence.textContent = f"{int(confidence * 100)}%"
-        if ema_info:
-            ema_info.textContent = f"EMA7 {'>' if ema_diff > 0 else '<'} EMA21 на {abs(ema_diff):.2f}"
+    if recommendation_action:
+        recommendation_action.textContent = action
+    if recommendation_confidence:
+        recommendation_confidence.textContent = f"{int(confidence * 100)}%"
+    if ema_info:
+        ema_info.textContent = f"EMA7 {'>' if ema_diff > 0 else '<'} EMA21 на {abs(ema_diff):.2f}"
         
-        if recommendation_box:
-            recommendation_box.classList.remove("BUY", "SELL")
-            recommendation_box.classList.add(action)
+    if recommendation_box:
+        recommendation_box.classList.remove("BUY", "SELL")
+        recommendation_box.classList.add(action)
             
-    except Exception as e:
-        print(f"Ошибка при обновлении блока рекомендации: {e}")
-
+    
+    
 def update_price_display(price):
     """Обновляет отображение текущей цены"""
-    try:
-        price_element = document.querySelector("#current-price")
-        if price_element:
-            price_element.textContent = f"{price:.2f} руб"
-    except Exception as e:
-        print(f"Ошибка при обновлении цены: {e}")
+
+    price_element = document.querySelector("#current-price")
+    if price_element:
+        price_element.textContent = f"{price:.2f} руб"
+
 
 async def get_forecast_data(metal_code):
     """Получает прогноз от бэкенда"""
@@ -185,19 +183,18 @@ async def handle_forecast_button_click(event=None):
         print(f"Ошибка при получении прогноза: {e}")
 
 def bind_event_handlers():
-    try:
-        button = document.querySelector("#get-forecast-btn")
-        if button:
-            def proxy_handler(_):
-                asyncio.ensure_future(handle_forecast_button_click())
+    
+    button = document.querySelector("#get-forecast-btn")
+    if button:
+        def proxy_handler(_):
+            asyncio.ensure_future(handle_forecast_button_click())
             
-            handler = create_proxy(proxy_handler)
-            button.addEventListener("click", handler)
-        else:
-            print("Кнопка прогноза не найдена")
-    except Exception as e:
-        print(f"Ошибка при привязке обработчика: {e}")
+        handler = create_proxy(proxy_handler)
+        button.addEventListener("click", handler)
+    else:
+        print("Кнопка прогноза не найдена")
+    
+    
 
 bind_event_handlers()
 
-print("ФРОНТЕНД (ai_forecast.py): Файл ai_forecast.py загружен.") 

@@ -12,15 +12,15 @@ UPDATE_INTERVAL_SECONDS = 300  # 5 минут в секундах
 def display_error_in_table(message):
     table_body = document.querySelector("#metals-table tbody")
     if not table_body:
-        print(f"ОШИБКА ФРОНТЕНДА (tabl1.py): Элемент tbody таблицы 'metals-table' не найден для отображения ошибки: {message}")
+        print(f"ОШИБКА Элемент tbody таблицы 'metals-table' не найден ")
         return
     table_body.innerHTML = f'<tr><td colspan="4" style="color: red; text-align: center;">{message}</td></tr>'
-    print(f"ФРОНТЕНД (tabl1.py): Отображена ошибка в таблице актуальных цен: {message}")
+    print(f"ошибка в таблице актуальных цен")
 
 def populate_metal_table(metals_list):
     table_body = document.querySelector("#metals-table tbody")
     if not table_body:
-        print("ОШИБКА ФРОНТЕНДА (tabl1.py): Элемент tbody таблицы 'metals-table' не найден.")
+        print("Элемент tbody таблицы 'metals-table' не найден.")
         return
 
     table_body.innerHTML = "" # Очищаем предыдущие строки
@@ -42,7 +42,7 @@ def populate_metal_table(metals_list):
     table_body.innerHTML = new_rows_html
 
 async def fetch_and_update_actual_metals_data(): # Переименована для ясности
-    print(f"ФРОНТЕНД (tabl1.py): Попытка запроса данных с {API_METALS_URL} в {time.strftime('%H:%M:%S')}")
+    
     try:
         response = await pyodide.http.pyfetch(API_METALS_URL)
         api_response_text = await response.string()
@@ -55,24 +55,19 @@ async def fetch_and_update_actual_metals_data(): # Переименована д
             return
 
         if api_data.get("error"):
-            error_message = f'Ошибка от API бэкенда: {api_data["error"]}'
+            error_message = f'Ошибка от API бэкенда'
             if api_data.get("last_successful_data_update", 0) == 0 and not api_data.get("data"):
-                 error_message += " (Данные с ЦБ еще ни разу не были успешно загружены сервером)"
+                 error_message += " (Данные с ЦБ не были успешно загружены )"
             print(error_message)
             display_error_in_table(error_message)
             return
         
         metals = api_data.get("data")
-        if metals:
-            populate_metal_table(metals)
-        else:
-            display_error_in_table("API бэкенда вернуло ответ без данных и без явной ошибки.")
-            print("ФРОНТЕНД (tabl1.py): API бэкенда вернуло пустые данные без явной ошибки.")
-
+        
     except Exception as e:
-        error_message = f"Критическая ошибка в fetch_and_update_actual_metals_data (tabl1.py): {e}"
+        error_message = f" ошибка в fetch_and_update_actual_metals_data : {e}"
         print(error_message)
         display_error_in_table(error_message)
         traceback.print_exc()
 
-print("ФРОНТЕНД (tabl1.py): Модуль tabl1.py загружен.") 
+print(" Модуль tabl1.py загружен.") 

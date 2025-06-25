@@ -13,7 +13,7 @@ PORT = 8000
 WEB_DIR = os.path.join(os.path.dirname(__file__), '../frontend')
 CBR_URL = 'https://www.cbr.ru/scripts/xml_metall.asp'
 
-# Базовая структура данных о металлах
+#  структура данных о металлах
 metals_cache = [
     {"name": "Золото", "price": "N/A", "unit": "руб./грамм", "date": "N/A"},
     {"name": "Серебро", "price": "N/A", "unit": "руб./грамм", "date": "N/A"},
@@ -99,9 +99,9 @@ def fetch_and_update_metal_prices():
             parsing_error_message = None
             
     except requests.exceptions.RequestException as e:
-        parsing_error_message = f"Ошибка сети при запросе к ЦБ РФ: {e}"
+        parsing_error_message = f"Ошибка при запросе к ЦБ: {e}"
     except Exception as e:
-        parsing_error_message = f"Произошла ошибка при парсинге данных ЦБ РФ: {e}"
+        parsing_error_message = f"ошибка при парсинге данных ЦБ: {e}"
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -157,14 +157,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             }
             
             if metal_code not in metal_mapping:
-                self.send_error(400, "Неверный код металла")
+                self.send_error(400, "ошибка кода")
                 return
 
             metal_name_en, metal_name_ru = metal_mapping[metal_code]
             
             with metals_data_lock:
                 if metal_name_ru not in historical_metals_data_cache:
-                    self.send_error(404, "Данные для металла не найдены")
+                    self.send_error(404, "Данные не найдены")
                     return
                 
                 historical_data = historical_metals_data_cache[metal_name_ru]
@@ -215,18 +215,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     ema_signal = "BUY" if ema_diff > 0 else "SELL"
                     forecast_signal = "BUY" if price_trend > 0 else "SELL"
                     
-                    # Если оба сигнала совпадают, высокая уверенность
-                    # Если противоречат друг другу, низкая уверенность
                     if ema_signal == forecast_signal:
                         action = ema_signal
-                        # Рассчитываем уверенность на основе обоих факторов
+                       
                         ema_strength = min(abs(ema_diff) / current_price * 100, 100) / 100
                         forecast_strength = min(abs(price_trend) / current_price * 100, 100) / 100
                         confidence = (ema_strength + forecast_strength) / 2
                     else:
-                        # При противоречивых сигналах доверяем больше прогнозу
+                        
                         action = forecast_signal
-                        # Уверенность ниже, так как сигналы противоречат друг другу
+                       
                         confidence = min(abs(price_trend) / current_price * 100, 100) / 200
 
                     response_data = {
